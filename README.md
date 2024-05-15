@@ -1,4 +1,4 @@
-# Bring your own Data QnA
+# Bring your own Data QnA and evaluate the LLMs on your custom Data
 
 This sample demonstrates Q&A application powered by Open source LLMs hosted on Azure Managed Online Endpoint. It utilizes indexed files from Azure Machine Learning to provide grounded answers. You can ask a wide range of questions related to Azure Machine Learning and receive responses. The process involves embedding the raw query, using vector search to find most relevant context in user data, and then using LLM to chat with you with the documents. This sample can also be used to evaluate LLMs on custom data using both pre-built and custom metrics like Groundedness, Relevance, GPT Similarity Score, F1 Score, BLEU Score, etc and select the model best suited for your use case.
 
