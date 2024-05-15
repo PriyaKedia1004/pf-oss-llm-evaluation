@@ -1,0 +1,79 @@
+id: bring_your_own_data_qna
+name: Bring Your Own Data QnA
+inputs:
+  question:
+    type: string
+    default: How to use SDK V2?
+    is_chat_input: false
+outputs:
+  output:
+    type: string
+    reference: ${phi3_oss.output}
+nodes:
+- name: lookup
+  type: python
+  source:
+    type: package
+    tool: promptflow_vectordb.tool.common_index_lookup.search
+  inputs:
+    mlindex_content: >
+      embeddings:
+        api_base: https://azure-open-ai-priya.openai.azure.com/
+        api_type: azure
+        api_version: '2024-02-01'
+        batch_size: '1'
+        connection:
+          id: /subscriptions/f5f80e31-2fdd-4b74-93a3-bfa3a73f897f/resourceGroups/llm-experimentations/providers/Microsoft.MachineLearningServices/workspaces/sota-llm-experimentations/connections/azureopenai-priya
+        connection_type: workspace_connection
+        deployment: text-embedding-3-small
+        dimension: 1536
+        kind: open_ai
+        model: text-embedding-3-small
+        schema_version: '2'
+      index:
+        api_version: '2023-11-01'
+        connection:
+          id: /subscriptions/f5f80e31-2fdd-4b74-93a3-bfa3a73f897f/resourceGroups/llm-experimentations/providers/Microsoft.MachineLearningServices/workspaces/sota-llm-experimentations/connections/ai-search-insurance-index
+        connection_type: workspace_connection
+        endpoint: https://cognitive-search-using-own-data-priya.search.windows.net
+        engine: azure-sdk
+        field_mapping:
+          content: chunk
+          embedding: vector
+          metadata: title
+        index: insurance-index
+        kind: acs
+        semantic_configuration_name: my-semantic-config
+    queries: ${inputs.question}
+    query_type: Hybrid + semantic
+    top_k: 2
+  use_variants: false
+- name: generate_prompt_context
+  type: python
+  source:
+    type: code
+    path: generate_prompt_context.py
+  inputs:
+    search_result: ${lookup.output}
+  use_variants: false
+- name: Prompt_variants
+  type: prompt
+  source:
+    type: code
+    path: Prompt_variants__variant_1.jinja2
+  inputs:
+    contexts: ${generate_prompt_context.output}
+    question: ${inputs.question}
+  use_variants: false
+- name: phi3_oss
+  type: python
+  source:
+    type: code
+    path: phi3_oss.py
+  inputs:
+    myconn: phi3-endpoint
+    message: ${Prompt_variants.output}
+  use_variants: false
+node_variants: {}
+environment:
+  python_requirements_txt: requirements.txt
